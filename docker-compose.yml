@@ -13,7 +13,7 @@ services:
       SUPERSET_ADMIN_PASSWORD: "admin"
       SUPERSET_SECRET_KEY: "supersecretkey"
     volumes:
-      - ./superset_home:/app/superset_home
+      - ./docker_volumes/superset_home:/app/superset_home
     depends_on:
       - postgres
     networks:
@@ -27,7 +27,7 @@ services:
       POSTGRES_PASSWORD: "superset"
       POSTGRES_DB: "superset"
     volumes:
-      - ./postgres_data:/var/lib/postgresql/data
+      - ./docker_volumes/postgres_data:/var/lib/postgresql/data
     networks:
       - superset-net
     ports:
