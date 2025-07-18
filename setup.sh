@@ -3,10 +3,10 @@
 SCTIPR_DIR=$(cd $(dirname $0);pwd)
 cd ${SCTIPR_DIR}
 
-mkdir -p docker_volumes/superset_home
-mkdir -p docker_volumes/postgres_data
-chmod -R 755 ./docker_volumes
-chown -R 1000:1000 ./docker_volumes
+mkdir -p volumes/superset_home
+mkdir -p volumes/postgres_data
+chmod -R 755 ./volumes
+chown -R 1000:1000 ./volumes
 
 docker compose up -d
 # 初期化

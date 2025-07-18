@@ -1,0 +1,6 @@
+tqdm
+requests
+psycopg2-binary
+pandas
+sqlalchemy
+jupyterlab

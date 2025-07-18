@@ -1,1 +1,7 @@
+/data
 /docker_volumes
+/venv
+/volumes
+/tmp
+
+*.ipynb
