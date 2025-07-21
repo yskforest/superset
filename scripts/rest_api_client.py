@@ -37,6 +37,11 @@ class RestApiClient:
         """認証トークンをセッションヘッダーに設定します。"""
         self.session.headers.update({"Authorization": f"{token_type} {token}"})
 
+    def remove_auth_token(self):
+        """認証トークンをセッションヘッダーから削除します。"""
+        if "Authorization" in self.session.headers:
+            del self.session.headers["Authorization"]
+
     def _request(self, method: str, endpoint: str, **kwargs) -> Response | None:
         """リクエストを送信する内部メソッド。
 
