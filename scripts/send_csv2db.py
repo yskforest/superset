@@ -1,35 +1,54 @@
 import argparse
-import pandas as pd
-from sqlalchemy import create_engine
 import os
 from datetime import datetime
 
+import pandas as pd
+import psycopg
+from psycopg import sql
+from sqlalchemy import create_engine
 
-def import_csv_to_postgres(csv_file, user, password, host, port, database, table, schema, tag):
-    # Check if the CSV file exists
-    if not os.path.exists(csv_file):
-        print(f"CSV file '{csv_file}' does not exist. Skipping import.")
-        return
 
-    # Read the CSV file
-    try:
-        df = pd.read_csv(csv_file)
-        # Add a timestamp column with the current time
-        df["timestamp"] = datetime.now()
-        # Add a tag column with the specified tag
-        df["tag"] = tag
-    except Exception as e:
-        print(f"Error occurred while reading the CSV file: {e}")
-        return
+class PostgresClient:
+    """PostgreSQLデータベースを操作するためのクライアントクラス。"""
 
-    # Connect to PostgreSQL
-    try:
-        engine = create_engine(f"postgresql://{user}:{password}@{host}:{port}/{database}")
-        # Import data into PostgreSQL
-        df.to_sql(table, con=engine, schema=schema, if_exists="append", index=False)
-        print(f"Data successfully imported into table '{schema}.{table}'.")
-    except Exception as e:
-        print(f"Error occurred during PostgreSQL connection or data import: {e}")
+    def __init__(self, user, password, host, port, dbname):
+        self.connection = psycopg.connect(f"dbname={dbname} user={user} password={password} host={host} port={port}")
+        self.engine = create_engine(f"postgresql://{user}:{password}@{host}:{port}/{dbname}")
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """コンテキストマネージャの終了時にデータベース接続を閉じます。"""
+        if self.connection:
+            self.connection.close()
+
+    def create_schema(self, schema_name):
+        with self.connection.cursor() as cursor:
+            cursor.execute(sql.SQL("CREATE SCHEMA IF NOT EXISTS {}").format(sql.Identifier(schema_name)))
+            self.connection.commit()
+
+    def import_csv_to_postgres(self, csv_file, table, schema, timestamp=True, tag=None):
+        """CSVファイルを読み込み、PostgreSQLのテーブルにインポートします。"""
+        if not os.path.exists(csv_file):
+            print(f"CSV file '{csv_file}' does not exist. Skipping import.")
+            return
+
+        try:
+            df = pd.read_csv(csv_file)
+            if timestamp:
+                df["timestamp"] = datetime.now()
+            if tag:
+                df["tag"] = tag
+        except Exception as e:
+            print(f"Error occurred while reading the CSV file: {e}")
+            return
+
+        try:
+            df.to_sql(table, con=self.engine, schema=schema, if_exists="append", index=False)
+            print(f"Data successfully imported into table '{schema}.{table}'.")
+        except Exception as e:
+            print(f"Error occurred during data import: {e}")
 
 
 def main():
@@ -58,17 +77,24 @@ def main():
     args = parser.parse_args()
 
     print("Starting CSV import...")
-    import_csv_to_postgres(
-        csv_file=args.csv_file,
-        user=args.user,
-        password=args.password,
-        host=args.host,
-        port=args.port,
-        database=args.database,
-        table=args.table,
-        schema=args.schema,
-        tag=args.tag,
-    )
+    try:
+        with PostgresClient(
+            user=args.user,
+            password=args.password,
+            host=args.host,
+            port=args.port,
+            database=args.database,
+        ) as client:
+            client.create_schema(args.schema)
+            client.import_csv_to_postgres(
+                csv_file=args.csv_file,
+                table=args.table,
+                schema=args.schema,
+                tag=args.tag,
+            )
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
     print("CSV import completed.")
 
 
