@@ -1,5 +1,6 @@
 tqdm
 requests
+psycopg[binary]
 psycopg2-binary
 pandas
 sqlalchemy
