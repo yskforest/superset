@@ -2,7 +2,9 @@ services:
   superset:
     build:
       context: .
-    image: superset:latest
+      args:
+        - BASE_IMAGE=apache/superset:${SUPERSET_VERSION}
+    image: superset:${SUPERSET_VERSION}
     container_name: superset
     ports:
       - "8088:8088"

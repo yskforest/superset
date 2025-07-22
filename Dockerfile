@@ -1,5 +1,8 @@
-FROM apache/superset:latest
+ARG BASE_IMAGE=apache/superset:latest
+FROM ${BASE_IMAGE}
 
 USER root
-RUN pip install psycopg2-binary
+RUN uv pip install --no-cache-dir \
+    psycopg2-binary pillow
+    
 USER superset
